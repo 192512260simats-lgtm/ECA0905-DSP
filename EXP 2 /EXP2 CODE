@@ -1,0 +1,124 @@
+
+clear;
+clc;
+close all;
+
+% Design Parameters
+Fs = 10000;     % Sampling frequency in Hz
+Ap = 0.5;       % Passband ripple in dB
+As = 30;        % Stopband attenuation in dB
+
+% ==========================================
+% 1. LOW-PASS FILTER DESIGN
+% ==========================================
+fp_lp = 1500;   % Passband frequency in Hz
+fs_lp = 2000;   % Stopband frequency in Hz
+
+% Normalize frequencies
+wp_lp = fp_lp / (Fs/2);
+ws_lp = fs_lp / (Fs/2);
+
+% Calculate filter order and cutoff frequency
+[N_lp, Wn_lp] = cheb1ord(wp_lp, ws_lp, Ap, As);
+
+% Design Chebyshev Type-I low-pass filter
+[b_lp, a_lp] = cheby1(N_lp, Ap, Wn_lp, 'low');
+
+% ==========================================
+% 2. HIGH-PASS FILTER DESIGN
+% ==========================================
+fp_hp = 2500;   % Passband frequency in Hz
+fs_hp = 1800;   % Stopband frequency in Hz
+
+% Normalize frequencies
+wp_hp = fp_hp / (Fs/2);
+ws_hp = fs_hp / (Fs/2);
+
+% Calculate filter order and cutoff frequency
+[N_hp, Wn_hp] = cheb1ord(wp_hp, ws_hp, Ap, As);
+
+% Design Chebyshev Type-I high-pass filter
+[b_hp, a_hp] = cheby1(N_hp, Ap, Wn_hp, 'high');
+
+% ==========================================
+% 3. DISPLAY NUMERICAL OUTPUTS
+% ==========================================
+fprintf('=== EXPERIMENT 2: CHEBYSHEV TYPE-I IIR FILTERS ===\n\n');
+
+fprintf('--- CHEBYSHEV LOW-PASS FILTER ---\n');
+fprintf('Filter Order (N_lp): %d\n', N_lp);
+fprintf('Passband Edge Frequency: %.2f Hz\n', Wn_lp * (Fs/2));
+
+fprintf('Numerator Coefficients (b_lp):\n');
+disp(b_lp);
+
+fprintf('Denominator Coefficients (a_lp):\n');
+disp(a_lp);
+
+fprintf('\n--- CHEBYSHEV HIGH-PASS FILTER ---\n');
+fprintf('Filter Order (N_hp): %d\n', N_hp);
+fprintf('Passband Edge Frequency: %.2f Hz\n', Wn_hp * (Fs/2));
+
+fprintf('Numerator Coefficients (b_hp):\n');
+disp(b_hp);
+
+fprintf('Denominator Coefficients (a_hp):\n');
+disp(a_hp);
+
+% ==========================================
+% 4. FREQUENCY RESPONSE CALCULATION
+% ==========================================
+[H_lp, f] = freqz(b_lp, a_lp, 1024, Fs);
+[H_hp, ~] = freqz(b_hp, a_hp, 1024, Fs);
+
+% Convert magnitude to decibels safely
+mag_lp = 20 * log10(max(abs(H_lp), 1e-12));
+mag_hp = 20 * log10(max(abs(H_hp), 1e-12));
+
+% Convert phase to degrees
+phase_lp = angle(H_lp) * 180/pi;
+phase_hp = angle(H_hp) * 180/pi;
+
+% ==========================================
+% 5. PLOT MAGNITUDE AND PHASE RESPONSES
+% ==========================================
+figure('Name', 'Chebyshev Type-I LPF and HPF Responses', ...
+       'NumberTitle', 'off');
+
+% Low-pass magnitude response
+subplot(2,2,1);
+plot(f, mag_lp, 'b', 'LineWidth', 1.5);
+grid on;
+title(['Chebyshev LPF Magnitude (Order N = ', ...
+       num2str(N_lp), ')']);
+xlabel('Frequency (Hz)');
+ylabel('Magnitude (dB)');
+ylim([-60 5]);
+
+% Low-pass phase response
+subplot(2,2,2);
+plot(f, phase_lp, 'r', 'LineWidth', 1.5);
+grid on;
+title('Chebyshev LPF Phase Response');
+xlabel('Frequency (Hz)');
+ylabel('Phase (degrees)');
+
+% High-pass magnitude response
+subplot(2,2,3);
+plot(f, mag_hp, 'b', 'LineWidth', 1.5);
+grid on;
+title(['Chebyshev HPF Magnitude (Order N = ', ...
+       num2str(N_hp), ')']);
+xlabel('Frequency (Hz)');
+ylabel('Magnitude (dB)');
+ylim([-60 5]);
+
+% High-pass phase response
+subplot(2,2,4);
+plot(f, phase_hp, 'r', 'LineWidth', 1.5);
+grid on;
+title('Chebyshev HPF Phase Response');
+xlabel('Frequency (Hz)');
+ylabel('Phase (degrees)');
+
+sgtitle('Chebyshev Type-I IIR Filter Responses');
